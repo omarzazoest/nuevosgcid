@@ -84,7 +84,6 @@ $carreras = $conn ? $conn->query('SELECT id_carrera, nombre_carrera FROM carrera
     <aside class="manager-sidebar" id="manager-sidebar">
         <div class="brand-box">
             <div>
-                <span class="brand-box__label">ERP / CRM</span>
                 <h2>CID</h2>
             </div>
             <button class="sidebar-close" id="sidebar-close" type="button">✕</button>

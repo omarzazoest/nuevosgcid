@@ -50,7 +50,6 @@ if (!empty($conn)) {
     <aside class="manager-sidebar" id="manager-sidebar">
         <div class="brand-box">
             <div>
-                <span class="brand-box__label">ERP / CRM</span>
                 <h2>CID</h2>
             </div>
             <button class="sidebar-close" id="sidebar-close" type="button">✕</button>
@@ -142,7 +141,7 @@ if (!empty($conn)) {
             </section>
         </div>
     </main>
-
+<!--dedicado a la memoria de pechocho, oct 2025. -Omar -->
     <script>
         const WS_CLIENT_URL = <?= json_encode(websocket_client_url(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
         const sidebar = document.getElementById('manager-sidebar');

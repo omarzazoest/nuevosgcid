@@ -82,7 +82,6 @@ $tipos = $conn ? $conn->query('SELECT id_tipo_usuario, nombre_tipo, numero_digit
     <aside class="manager-sidebar" id="manager-sidebar">
         <div class="brand-box">
             <div>
-                <span class="brand-box__label">ERP / CRM</span>
                 <h2>CID</h2>
             </div>
             <button class="sidebar-close" id="sidebar-close" type="button">✕</button>
