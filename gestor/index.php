@@ -62,6 +62,7 @@ if (!empty($conn)) {
             <a href="<?= htmlspecialchars(app_url('gestor/adscripciones.php'), ENT_QUOTES, 'UTF-8') ?>">Adscripciones</a>
             <a href="<?= htmlspecialchars(app_url('gestor/tipos.php'), ENT_QUOTES, 'UTF-8') ?>">Tipos de usuario</a>
             <a href="<?= htmlspecialchars(app_url('gestor/visitas.php'), ENT_QUOTES, 'UTF-8') ?>">Visitas</a>
+            <a href="<?= htmlspecialchars(app_url('gestor/carga_masiva.php'), ENT_QUOTES, 'UTF-8') ?>">Carga masiva</a>
         </nav>
         <div class="sidebar-footer">
             <a href="<?= htmlspecialchars(app_url('gestor/logout.php'), ENT_QUOTES, 'UTF-8') ?>">Cerrar sesión</a>
@@ -79,6 +80,7 @@ if (!empty($conn)) {
         </header>
 
         <div class="manager-content">
+            <div id="ws-visit-alert" class="alert alert-success" style="display:none;"></div>
             <?php if ($message): ?>
                 <div class="alert alert-<?= htmlspecialchars($messageType, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div>
             <?php endif; ?>
@@ -90,7 +92,7 @@ if (!empty($conn)) {
                 </article>
                 <article class="stats-card">
                     <span>Ingresos CID</span>
-                    <strong><?= $visitas ?></strong>
+                    <strong id="visitas-total"><?= $visitas ?></strong>
                 </article>
                 <article class="stats-card">
                     <span>Carreras</span>
@@ -119,7 +121,7 @@ if (!empty($conn)) {
                                 <th>Detalle</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="ingresos-body">
                             <?php if ($ultimosIngresos): while ($ingreso = $ultimosIngresos->fetch_assoc()): ?>
                             <tr>
                                 <td><?= htmlspecialchars($ingreso['momento_ingreso'], ENT_QUOTES, 'UTF-8') ?></td>
@@ -140,10 +142,14 @@ if (!empty($conn)) {
     </main>
 
     <script>
+        const WS_CLIENT_URL = <?= json_encode(websocket_client_url(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
         const sidebar = document.getElementById('manager-sidebar');
         const backdrop = document.getElementById('sidebar-backdrop');
         const toggle = document.getElementById('sidebar-toggle');
         const closeBtn = document.getElementById('sidebar-close');
+        const wsVisitAlert = document.getElementById('ws-visit-alert');
+        const ingresosBody = document.getElementById('ingresos-body');
+        const visitasTotal = document.getElementById('visitas-total');
 
         function openSidebar() {
             sidebar.classList.add('manager-sidebar--open');
@@ -158,6 +164,84 @@ if (!empty($conn)) {
         toggle.addEventListener('click', openSidebar);
         closeBtn.addEventListener('click', closeSidebar);
         backdrop.addEventListener('click', closeSidebar);
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function addVisitToTable(payload) {
+            if (!ingresosBody || !payload) return;
+
+            const emptyRow = ingresosBody.querySelector('tr td[colspan="6"]');
+            if (emptyRow) {
+                emptyRow.parentElement.remove();
+            }
+
+            const row = document.createElement('tr');
+            row.innerHTML = '' +
+                '<td>' + escapeHtml(payload.momento || '') + '</td>' +
+                '<td>' + escapeHtml(payload.usuario || 'Sin usuario') + '</td>' +
+                '<td>' + escapeHtml(payload.identificador || 'Sin identificador') + '</td>' +
+                '<td>' + escapeHtml(payload.servicio || '') + '</td>' +
+                '<td>' + escapeHtml(payload.actividad || '') + '</td>' +
+                '<td>' + escapeHtml(payload.detalle || '') + '</td>';
+
+            ingresosBody.prepend(row);
+
+            while (ingresosBody.rows.length > 12) {
+                ingresosBody.deleteRow(ingresosBody.rows.length - 1);
+            }
+        }
+
+        function increaseVisitCounter() {
+            if (!visitasTotal) return;
+            const current = Number(visitasTotal.textContent || '0');
+            if (!Number.isNaN(current)) {
+                visitasTotal.textContent = String(current + 1);
+            }
+        }
+
+        function startVisitSocket() {
+            if (!WS_CLIENT_URL) return;
+
+            let socket;
+
+            try {
+                socket = new WebSocket(WS_CLIENT_URL);
+            } catch (error) {
+                return;
+            }
+
+            socket.addEventListener('message', function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (!data || data.type !== 'new_visit') {
+                        return;
+                    }
+
+                    if (wsVisitAlert) {
+                        wsVisitAlert.textContent = 'Nueva visita registrada: ' + (data.payload && data.payload.usuario ? data.payload.usuario : 'usuario') + '.';
+                        wsVisitAlert.style.display = 'block';
+                    }
+
+                    addVisitToTable(data.payload || {});
+                    increaseVisitCounter();
+                } catch (e) {
+                    // Ignorar mensajes no JSON.
+                }
+            });
+
+            socket.addEventListener('close', function() {
+                setTimeout(startVisitSocket, 2500);
+            });
+        }
+
+        startVisitSocket();
     </script>
 </body>
 </html>

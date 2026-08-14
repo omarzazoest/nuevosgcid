@@ -105,6 +105,8 @@ button, input, select { font: inherit; }
 
 .registro-main-card {
     width: 100%;
+    border: 2px solid rgba(18, 115, 65, 0.28);
+    background: linear-gradient(180deg, #f8fbf8 0%, #f1f8f3 100%);
 }
 
 .registro-info-card {

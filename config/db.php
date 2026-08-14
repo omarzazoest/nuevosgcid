@@ -71,6 +71,21 @@ function app_url(string $path = ''): string
     return ($basePath === '' ? '' : $basePath) . '/' . $path;
 }
 
+function websocket_client_url(): string
+{
+    return env('WS_CLIENT_URL', 'ws://127.0.0.1:8080');
+}
+
+function websocket_bind_host(): string
+{
+    return env('WS_BIND_HOST', '0.0.0.0');
+}
+
+function websocket_port(): int
+{
+    return (int) env('WS_PORT', '8080');
+}
+
 function get_connection(): mysqli
 {
     static $connection = null;

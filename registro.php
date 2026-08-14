@@ -5,6 +5,8 @@ require_once __DIR__ . '/config/db.php';
 $conn = null;
 $message = '';
 $messageType = '';
+$shouldEmitVisitEvent = false;
+$visitEventPayload = [];
 
 try {
     $conn = get_connection();
@@ -78,6 +80,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($message)) {
     $numCubiculo = trim($_POST['numCubiculo'] ?? '');
     $actividadCubiculo = trim($_POST['actividadCubiculo'] ?? '');
     $actividadBiblioteca = trim($_POST['actividadBiblioteca'] ?? '');
+    $actividadesBibliotecaPermitidas = [
+        'Asesoria' => 'Asesoria',
+        'Clase' => 'Clase',
+        'Conferencia' => 'Conferencia',
+        'Estudio' => 'Estudio',
+        'Induccion' => 'Induccion',
+        'Proyecto' => 'Proyecto',
+        'Taller' => 'Taller',
+        'Tarea' => 'Tarea',
+    ];
 
     $servicios = [
         'consulta' => 'Consulta en sala',
@@ -134,12 +146,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($message)) {
             $actividad = $servicio;
             $detalle = 'Cubículo ' . $numCubiculo . ' | Actividad: ' . $actividadCubiculo;
         } elseif ($servicioKey === 'actividades') {
-            if ($actividadBiblioteca === '') {
+            if ($actividadBiblioteca === '' || !isset($actividadesBibliotecaPermitidas[$actividadBiblioteca])) {
                 $message = 'Especifica la actividad a realizar en biblioteca.';
                 $messageType = 'error';
             }
             $actividad = $servicio;
-            $detalle = $actividadBiblioteca;
+            $detalle = $actividadesBibliotecaPermitidas[$actividadBiblioteca] ?? '';
         }
     }
 
@@ -206,6 +218,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($message)) {
 
             $message = 'Visita registrada correctamente para ' . htmlspecialchars($nombreOk, ENT_QUOTES, 'UTF-8') . '.';
             $messageType = 'success';
+            $shouldEmitVisitEvent = true;
+            $visitEventPayload = [
+                'usuario' => $nombreOk,
+                'tipo_usuario' => $funcion,
+                'identificador' => $funcion === 'externo' ? 'Externo' : $identificador,
+                'servicio' => $servicio,
+                'actividad' => $actividad,
+                'detalle' => $detalle,
+                'momento' => date('Y-m-d H:i:s'),
+            ];
         }
     } else {
         $messageType = 'error';
@@ -224,7 +246,7 @@ include __DIR__ . '/includes/header.php';
 
 <div class="grid registro-grid">
     <section class="card registro-main-card">
-        <h2>Registro rápido de visita</h2>
+        <h2>Registro de visita</h2>
         <p>Primero selecciona tu tipo de usuario. Si eres externo, captura tus datos personales; en otros casos, captura identificador y continúa con el servicio.</p>
         <?php if ($imagenRegistroUrl !== ''): ?>
         <div class="registro-banner">
@@ -361,7 +383,17 @@ include __DIR__ . '/includes/header.php';
             <div id="actividadesBox" class="opcional">
                 <div class="form-group">
                     <label for="actividadBiblioteca">Actividad a realizar</label>
-                    <input type="text" id="actividadBiblioteca" name="actividadBiblioteca">
+                    <select id="actividadBiblioteca" name="actividadBiblioteca">
+                        <option value="">Selecciona la respuesta</option>
+                        <option value="Asesoria">Asesoria</option>
+                        <option value="Clase">Clase</option>
+                        <option value="Conferencia">Conferencia</option>
+                        <option value="Estudio">Estudio</option>
+                        <option value="Induccion">Induccion</option>
+                        <option value="Proyecto">Proyecto</option>
+                        <option value="Taller">Taller</option>
+                        <option value="Tarea">Tarea</option>
+                    </select>
                 </div>
             </div>
 
@@ -385,6 +417,9 @@ include __DIR__ . '/includes/header.php';
 
 <script>
 const BUSCAR_USUARIO_URL = <?= json_encode(app_url('registro.php?action=buscar_usuario'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+const WS_CLIENT_URL = <?= json_encode(websocket_client_url(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+const SHOULD_EMIT_VISIT_EVENT = <?= $shouldEmitVisitEvent ? 'true' : 'false' ?>;
+const VISIT_EVENT_PAYLOAD = <?= json_encode($visitEventPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 let usuarioValidado = false;
 
 function ocultar(...ids) {
@@ -421,6 +456,27 @@ function setEstadoBusqueda(texto, tipo) {
     if (!box) return;
     box.textContent = texto || '';
     box.style.color = tipo === 'ok' ? 'var(--success)' : (tipo === 'error' ? 'var(--error)' : 'var(--muted)');
+}
+
+function emitirEventoNuevaVisita() {
+    if (!SHOULD_EMIT_VISIT_EVENT || !WS_CLIENT_URL) {
+        return;
+    }
+
+    try {
+        const ws = new WebSocket(WS_CLIENT_URL);
+        ws.addEventListener('open', function() {
+            ws.send(JSON.stringify({
+                type: 'new_visit',
+                payload: VISIT_EVENT_PAYLOAD,
+            }));
+            setTimeout(function() {
+                ws.close();
+            }, 250);
+        });
+    } catch (error) {
+        // Silencioso: no bloquea el registro aunque el socket no esté activo.
+    }
 }
 
 function limpiarUsuarioEncontrado() {
@@ -629,6 +685,7 @@ function mostrarActividadCubiculo() {
 
 document.addEventListener('DOMContentLoaded', function() {
     mostrarCampo();
+    emitirEventoNuevaVisita();
 
     ['nombreExt', 'apellido1Ext', 'apellido2Ext', 'sexoExt', 'opcionComun', 'digitalTitulo', 'actividadCubiculo', 'actividadBiblioteca', 'identificador'].forEach(function(id) {
         const el = document.getElementById(id);
