@@ -23,7 +23,7 @@ if (!empty($conn)) {
     $visitas = (int) $conn->query('SELECT COUNT(*) AS total FROM ingresoscid')->fetch_assoc()['total'];
     $carreras = $conn->query('SELECT id_carrera, nombre_carrera FROM carreras ORDER BY nombre_carrera')->fetch_all(MYSQLI_ASSOC);
     $adscripciones = $conn->query('SELECT id_adscripcion, nombre_adscripcion FROM adscripciones ORDER BY nombre_adscripcion')->fetch_all(MYSQLI_ASSOC);
-    $ultimosIngresos = $conn->query('SELECT i.id_ingreso, i.momento_ingreso, i.servicio, i.actividad, i.detalle, COALESCE(u.identificador, "Sin identificador") AS identificador, COALESCE(CONCAT(u.nombre, " ", u.apellido1, " ", u.apellido2), "Sin usuario") AS usuario FROM ingresoscid i LEFT JOIN usuarioscid u ON u.id_usuario = i.id_usuario ORDER BY i.momento_ingreso DESC LIMIT 12');
+    $ultimosIngresos = $conn->query('SELECT i.id_ingreso, i.momento_ingreso, i.servicio, i.actividad, i.detalle, COALESCE(u.identificador, "Sin identificador") AS identificador, COALESCE(CASE WHEN i.id_usuario IS NULL THEN CONCAT("Externo - ", TRIM(CONCAT_WS(" ", i.nombre_ext, i.apellido1_ext, i.apellido2_ext))) ELSE TRIM(CONCAT_WS(" ", u.nombre, u.apellido1, u.apellido2)) END, "Sin usuario") AS usuario FROM ingresoscid i LEFT JOIN usuarioscid u ON u.id_usuario = i.id_usuario ORDER BY i.momento_ingreso DESC LIMIT 12');
 } else {
     $usuarios = 0;
     $visitas = 0;
@@ -41,7 +41,7 @@ if (!empty($conn)) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f4c81'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-family='Arial' font-size='28' font-weight='700' fill='white'%3ECID%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%238a2036'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-family='Arial' font-size='28' font-weight='700' fill='white'%3ECID%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="<?= htmlspecialchars(app_url('assets/css/styles.css'), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body class="manager-body">
@@ -63,6 +63,8 @@ if (!empty($conn)) {
             <a href="<?= htmlspecialchars(app_url('gestor/tipos.php'), ENT_QUOTES, 'UTF-8') ?>">Tipos de usuario</a>
             <a href="<?= htmlspecialchars(app_url('gestor/visitas.php'), ENT_QUOTES, 'UTF-8') ?>">Visitas</a>
             <a href="<?= htmlspecialchars(app_url('gestor/carga_masiva.php'), ENT_QUOTES, 'UTF-8') ?>">Carga masiva</a>
+            <a href="<?= htmlspecialchars(app_url('gestor/libros.php'), ENT_QUOTES, 'UTF-8') ?>">Libros</a>
+            <a href="<?= htmlspecialchars(app_url('gestor/prestamos.php'), ENT_QUOTES, 'UTF-8') ?>">Préstamos</a>
         </nav>
         <div class="sidebar-footer">
             <a href="<?= htmlspecialchars(app_url('gestor/logout.php'), ENT_QUOTES, 'UTF-8') ?>">Cerrar sesión</a>

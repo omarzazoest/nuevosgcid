@@ -61,6 +61,22 @@ php websocket-server.php
 http://localhost/gestorcid/
 ```
 
+### 5.1 Autoarranque en Windows con XAMPP
+1. Usa el archivo `websocket-start.bat` que viene en la raiz del proyecto.
+2. Pruebalo con doble clic. Debe abrir una consola y mostrar que el websocket quedo activo.
+3. Para que arranque automaticamente al iniciar Windows:
+	- Presiona `Win + R`.
+	- Escribe `shell:startup` y acepta.
+	- Crea un acceso directo a `websocket-start.bat` dentro de esa carpeta.
+4. Si prefieres que se ejecute aunque nadie abra sesion, usa el Programador de tareas de Windows:
+	- Crea una tarea nueva.
+	- Desencadenador: `Al iniciar sesion` o `Al iniciar el sistema`.
+	- Accion: `Iniciar un programa`.
+	- Programa: ruta completa a `websocket-start.bat`.
+5. Verifica que `WS_CLIENT_URL` en `.env` siga apuntando a `ws://127.0.0.1:8080` o al puerto que uses.
+
+Nota: Apache y MySQL pueden seguir administrandose desde XAMPP; el websocket corre por separado con PHP.
+
 ## 6. Flujo esperado
 1. En `registro.php`, al registrar visita se guarda en DB.
 2. Al mismo tiempo se emite un evento websocket `new_visit`.

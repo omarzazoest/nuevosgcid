@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
 
             if ($idUsuario > 0) {
                 $stmt = $conn->prepare('UPDATE usuarioscid SET nombre = ?, apellido1 = ?, apellido2 = ?, identificador = ?, id_tipo_usuario = ?, id_carrera = ?, id_adscripcion = ? WHERE id_usuario = ?');
-                $stmt->bind_param('ssssiiis', $nombre, $apellido1, $apellido2, $identificador, $tipo, $carrera, $adscripcion, $idUsuario);
+                $stmt->bind_param('ssssiiii', $nombre, $apellido1, $apellido2, $identificador, $tipo, $carrera, $adscripcion, $idUsuario);
                 $message = 'Usuario actualizado correctamente.';
             } else {
                 $stmt = $conn->prepare('INSERT INTO usuarioscid (nombre, apellido1, apellido2, id_tipo_usuario, identificador, id_carrera, id_adscripcion) VALUES (?, ?, ?, ?, ?, ?, ?)');
@@ -100,7 +100,19 @@ if ($editId > 0 && $conn && !$editingUser) {
     $editingUser = $conn->query('SELECT u.id_usuario, u.identificador, u.nombre, u.apellido1, u.apellido2, u.id_tipo_usuario, u.id_carrera, u.id_adscripcion, t.numero_digitos_identificador, t.nombre_tipo FROM usuarioscid u LEFT JOIN tipos_usuarios t ON t.id_tipo_usuario = u.id_tipo_usuario WHERE u.id_usuario = ' . $editId . ' LIMIT 1')->fetch_assoc();
 }
 
-$usuarios = $conn ? $conn->query('SELECT u.id_usuario, u.identificador, CONCAT(u.nombre, " ", u.apellido1, " ", u.apellido2) AS nombre, u.id_tipo_usuario, t.nombre_tipo, t.numero_digitos_identificador, c.nombre_carrera, a.nombre_adscripcion FROM usuarioscid u LEFT JOIN tipos_usuarios t ON t.id_tipo_usuario = u.id_tipo_usuario LEFT JOIN carreras c ON c.id_carrera = u.id_carrera LEFT JOIN adscripciones a ON a.id_adscripcion = u.id_adscripcion ORDER BY u.id_usuario DESC') : null;
+$usuarios = null;
+$search = trim($_GET['q'] ?? '');
+if ($conn) {
+    if ($search !== '') {
+        $like = '%' . $search . '%';
+        $stmtUsuarios = $conn->prepare('SELECT u.id_usuario, u.identificador, CONCAT(u.nombre, " ", u.apellido1, " ", u.apellido2) AS nombre, u.id_tipo_usuario, t.nombre_tipo, t.numero_digitos_identificador, c.nombre_carrera, a.nombre_adscripcion FROM usuarioscid u LEFT JOIN tipos_usuarios t ON t.id_tipo_usuario = u.id_tipo_usuario LEFT JOIN carreras c ON c.id_carrera = u.id_carrera LEFT JOIN adscripciones a ON a.id_adscripcion = u.id_adscripcion WHERE u.identificador LIKE ? OR u.nombre LIKE ? OR u.apellido1 LIKE ? OR u.apellido2 LIKE ? ORDER BY u.id_usuario DESC LIMIT 100');
+        $stmtUsuarios->bind_param('ssss', $like, $like, $like, $like);
+        $stmtUsuarios->execute();
+        $usuarios = $stmtUsuarios->get_result();
+    } else {
+        $usuarios = $conn->query('SELECT u.id_usuario, u.identificador, CONCAT(u.nombre, " ", u.apellido1, " ", u.apellido2) AS nombre, u.id_tipo_usuario, t.nombre_tipo, t.numero_digitos_identificador, c.nombre_carrera, a.nombre_adscripcion FROM usuarioscid u LEFT JOIN tipos_usuarios t ON t.id_tipo_usuario = u.id_tipo_usuario LEFT JOIN carreras c ON c.id_carrera = u.id_carrera LEFT JOIN adscripciones a ON a.id_adscripcion = u.id_adscripcion ORDER BY u.id_usuario DESC LIMIT 100');
+    }
+}
 $tipos = $conn ? $conn->query('SELECT id_tipo_usuario, nombre_tipo, numero_digitos_identificador FROM tipos_usuarios ORDER BY nombre_tipo') : null;
 $carreras = $conn ? $conn->query('SELECT id_carrera, nombre_carrera FROM carreras ORDER BY nombre_carrera') : null;
 $adscripciones = $conn ? $conn->query('SELECT id_adscripcion, nombre_adscripcion FROM adscripciones ORDER BY nombre_adscripcion') : null;
@@ -114,7 +126,7 @@ $adscripciones = $conn ? $conn->query('SELECT id_adscripcion, nombre_adscripcion
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f4c81'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-family='Arial' font-size='28' font-weight='700' fill='white'%3ECID%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%238a2036'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-family='Arial' font-size='28' font-weight='700' fill='white'%3ECID%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="<?= htmlspecialchars(app_url('assets/css/styles.css'), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body class="manager-body">
@@ -136,6 +148,8 @@ $adscripciones = $conn ? $conn->query('SELECT id_adscripcion, nombre_adscripcion
             <a href="<?= htmlspecialchars(app_url('gestor/tipos.php'), ENT_QUOTES, 'UTF-8') ?>">Tipos de usuario</a>
             <a href="<?= htmlspecialchars(app_url('gestor/visitas.php'), ENT_QUOTES, 'UTF-8') ?>">Visitas</a>
             <a href="<?= htmlspecialchars(app_url('gestor/carga_masiva.php'), ENT_QUOTES, 'UTF-8') ?>">Carga masiva</a>
+            <a href="<?= htmlspecialchars(app_url('gestor/libros.php'), ENT_QUOTES, 'UTF-8') ?>">Libros</a>
+            <a href="<?= htmlspecialchars(app_url('gestor/prestamos.php'), ENT_QUOTES, 'UTF-8') ?>">Préstamos</a>
         </nav>
         <div class="sidebar-footer">
             <a href="<?= htmlspecialchars(app_url('gestor/logout.php'), ENT_QUOTES, 'UTF-8') ?>">Cerrar sesión</a>
@@ -222,8 +236,15 @@ $adscripciones = $conn ? $conn->query('SELECT id_adscripcion, nombre_adscripcion
 
             <section class="panel">
                 <div class="panel-header">
-                    <h3>Usuarios registrados</h3>
+                    <h3>Usuarios registrados (últimos 100)</h3>
                 </div>
+                <form method="get" class="form-grid single-field" style="margin-bottom:1rem;">
+                    <div class="field">
+                        <label>Buscar usuarios</label>
+                        <input type="text" name="q" value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>" placeholder="Identificador, nombre o apellidos...">
+                    </div>
+                    <div class="field field--submit"><button type="submit" class="btn btn-primary">Buscar</button></div>
+                </form>
                 <div class="table-wrap">
                     <table>
                         <thead>

@@ -2,6 +2,12 @@
 session_start();
 require_once __DIR__ . '/config/db.php';
 
+$homeImageUrl = '';
+$homeImages = glob(__DIR__ . '/img/*.{png,jpg,jpeg,webp,gif,svg}', GLOB_BRACE);
+if ($homeImages && isset($homeImages[0])) {
+    $homeImageUrl = app_url('img/' . rawurlencode(basename($homeImages[0])));
+}
+
 $usuarios = 0;
 $visitas = 0;
 $ultima = ['momento_ingreso' => 'Sin datos'];
@@ -18,6 +24,20 @@ try {
 
 include __DIR__ . '/includes/header.php';
 ?>
+
+<?php if ($homeImageUrl !== ''): ?>
+<section class="home-banner">
+    <div class="home-banner__image">
+        <img src="<?= htmlspecialchars($homeImageUrl, ENT_QUOTES, 'UTF-8') ?>" alt="Imagen institucional del CID">
+    </div>
+    <div class="home-banner__panel">
+        <p class="eyebrow">Centro de Información y Documentación</p>
+        <h2>Registro y control de visitas del CID</h2>
+        <p>Accede rápido al registro de visitas, administración de usuarios y consulta de movimientos recientes desde una vista pensada para escritorio y celular.</p>
+        <a class="btn" href="<?= htmlspecialchars(app_url('registro.php'), ENT_QUOTES, 'UTF-8') ?>">Registrar visita ahora</a>
+    </div>
+</section>
+<?php endif; ?>
 
 <div class="grid">
     <section class="card">

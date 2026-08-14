@@ -3,7 +3,7 @@ require_once __DIR__ . '/config/db.php';
 
 try {
     $conn = get_connection();
-    $query = 'SELECT i.id_ingreso, i.momento_ingreso, i.servicio, i.actividad, i.detalle, COALESCE(u.identificador, "Sin identificador") AS identificador, COALESCE(CONCAT(u.nombre, " ", u.apellido1, " ", u.apellido2), "Sin usuario") AS alumno FROM ingresoscid i LEFT JOIN usuarioscid u ON u.id_usuario = i.id_usuario ORDER BY i.momento_ingreso DESC';
+    $query = 'SELECT i.id_ingreso, i.momento_ingreso, i.servicio, i.actividad, i.detalle, COALESCE(u.identificador, "Sin identificador") AS identificador, COALESCE(CASE WHEN i.id_usuario IS NULL THEN CONCAT("Externo - ", TRIM(CONCAT_WS(" ", i.nombre_ext, i.apellido1_ext, i.apellido2_ext))) ELSE TRIM(CONCAT_WS(" ", u.nombre, u.apellido1, u.apellido2)) END, "Sin usuario") AS usuario FROM ingresoscid i LEFT JOIN usuarioscid u ON u.id_usuario = i.id_usuario ORDER BY i.momento_ingreso DESC';
     $result = $conn->query($query);
 } catch (Throwable $e) {
     http_response_code(500);
@@ -25,7 +25,7 @@ while ($row = $result->fetch_assoc()) {
         $row['actividad'] ?? '',
         $row['detalle'] ?? '',
         $row['identificador'] ?? 'Sin identificador',
-        $row['alumno'] ?? 'Sin usuario',
+        $row['usuario'] ?? 'Sin usuario',
     ], ';');
 }
 fclose($handle);
