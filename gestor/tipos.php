@@ -11,6 +11,7 @@ $conn = null;
 $message = '';
 $messageType = 'success';
 
+$editId = (int) ($_GET['edit_id'] ?? 0);
 try {
     $conn = get_connection();
 } catch (Throwable $e) {
@@ -18,24 +19,46 @@ try {
     $messageType = 'error';
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
-    $nombre = trim($_POST['nombre_tipo'] ?? '');
-    $digitos = (int) ($_POST['numero_digitos_identificador'] ?? 0);
+$editing = null;
+if ($editId > 0 && $conn) {
+    $editing = $conn->query('SELECT id_tipo_usuario, nombre_tipo, numero_digitos_identificador FROM tipos_usuarios WHERE id_tipo_usuario = ' . $editId . ' LIMIT 1')->fetch_assoc();
+}
 
-    if ($nombre === '' || $digitos <= 0) {
-        $message = 'Escribe el tipo y la cantidad de dígitos.';
-        $messageType = 'error';
-    } else {
-        $stmt = $conn->prepare('INSERT INTO tipos_usuarios (nombre_tipo, numero_digitos_identificador) VALUES (?, ?)');
-        $stmt->bind_param('si', $nombre, $digitos);
-        if ($stmt->execute()) {
-            $message = 'Tipo de usuario agregado correctamente.';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
+    $action = $_POST['action'] ?? 'save_tipo';
+    if ($action === 'delete_tipo') {
+        $deleteId = (int) ($_POST['id_tipo_usuario'] ?? 0);
+        if ($deleteId > 0) {
+            $conn->query('DELETE FROM tipos_usuarios WHERE id_tipo_usuario = ' . $deleteId);
+            $message = 'Tipo eliminado correctamente.';
             $messageType = 'success';
-        } else {
-            $message = 'No se pudo guardar: ' . $stmt->error;
-            $messageType = 'error';
         }
-        $stmt->close();
+    } else {
+        $idTipo = (int) ($_POST['id_tipo_usuario'] ?? 0);
+        $nombre = trim($_POST['nombre_tipo'] ?? '');
+        $digitos = (int) ($_POST['numero_digitos_identificador'] ?? 0);
+
+        if ($nombre === '' || $digitos < 0) {
+            $message = 'Escribe el tipo y la cantidad de dígitos.';
+            $messageType = 'error';
+        } else {
+            if ($idTipo > 0) {
+                $stmt = $conn->prepare('UPDATE tipos_usuarios SET nombre_tipo = ?, numero_digitos_identificador = ? WHERE id_tipo_usuario = ?');
+                $stmt->bind_param('sii', $nombre, $digitos, $idTipo);
+                $message = 'Tipo actualizado correctamente.';
+            } else {
+                $stmt = $conn->prepare('INSERT INTO tipos_usuarios (nombre_tipo, numero_digitos_identificador) VALUES (?, ?)');
+                $stmt->bind_param('si', $nombre, $digitos);
+                $message = 'Tipo de usuario agregado correctamente.';
+            }
+            if ($stmt->execute()) {
+                $messageType = 'success';
+            } else {
+                $message = 'No se pudo guardar: ' . $stmt->error;
+                $messageType = 'error';
+            }
+            $stmt->close();
+        }
     }
 }
 
@@ -94,19 +117,26 @@ $tipos = $conn ? $conn->query('SELECT id_tipo_usuario, nombre_tipo, numero_digit
 
             <section class="panel">
                 <div class="panel-header">
-                    <h3>Nuevo tipo de usuario</h3>
+                    <h3><?= $editing ? 'Editar tipo de usuario' : 'Nuevo tipo de usuario' ?></h3>
                 </div>
                 <form method="post" class="form-grid single-field">
+                    <input type="hidden" name="action" value="save_tipo">
+                    <?php if ($editing): ?>
+                        <input type="hidden" name="id_tipo_usuario" value="<?= (int) $editing['id_tipo_usuario'] ?>">
+                    <?php endif; ?>
                     <div class="field">
                         <label>Nombre del tipo</label>
-                        <input type="text" name="nombre_tipo" required>
+                        <input type="text" name="nombre_tipo" value="<?= htmlspecialchars($editing['nombre_tipo'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
                     </div>
                     <div class="field">
                         <label>Número de dígitos</label>
-                        <input type="number" name="numero_digitos_identificador" value="8" min="1" required>
+                        <input type="number" name="numero_digitos_identificador" value="<?= htmlspecialchars((string) ($editing['numero_digitos_identificador'] ?? 8), ENT_QUOTES, 'UTF-8') ?>" min="0" required>
                     </div>
                     <div class="field field--submit">
-                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <button type="submit" class="btn btn-primary"><?= $editing ? 'Actualizar' : 'Guardar' ?></button>
+                        <?php if ($editing): ?>
+                            <a href="<?= htmlspecialchars(app_url('gestor/tipos.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-secondary">Cancelar</a>
+                        <?php endif; ?>
                     </div>
                 </form>
             </section>
@@ -115,9 +145,19 @@ $tipos = $conn ? $conn->query('SELECT id_tipo_usuario, nombre_tipo, numero_digit
                 <div class="panel-header">
                     <h3>Tipos configurados</h3>
                 </div>
-                <div class="tag-list">
+                <div class="tag-list" style="display:block;">
                     <?php if ($tipos): while ($tipo = $tipos->fetch_assoc()): ?>
-                        <span class="tag"><?= htmlspecialchars($tipo['nombre_tipo'], ENT_QUOTES, 'UTF-8') ?> (<?= (int) $tipo['numero_digitos_identificador'] ?>)</span>
+                        <div class="tag-row">
+                            <span class="tag"><?= htmlspecialchars($tipo['nombre_tipo'], ENT_QUOTES, 'UTF-8') ?> (<?= (int) $tipo['numero_digitos_identificador'] ?>)</span>
+                            <div class="row-actions">
+                                <a href="<?= htmlspecialchars(app_url('gestor/tipos.php?edit_id=' . (int) $tipo['id_tipo_usuario']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-small btn-secondary">Editar</a>
+                                <form method="post" class="inline-form">
+                                    <input type="hidden" name="action" value="delete_tipo">
+                                    <input type="hidden" name="id_tipo_usuario" value="<?= (int) $tipo['id_tipo_usuario'] ?>">
+                                    <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('¿Deseas eliminar este tipo?');">Eliminar</button>
+                                </form>
+                            </div>
+                        </div>
                     <?php endwhile; else: ?>
                         <span class="tag">Sin tipos disponibles</span>
                     <?php endif; ?>

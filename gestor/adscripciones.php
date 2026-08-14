@@ -11,6 +11,7 @@ $conn = null;
 $message = '';
 $messageType = 'success';
 
+$editId = (int) ($_GET['edit_id'] ?? 0);
 try {
     $conn = get_connection();
 } catch (Throwable $e) {
@@ -18,22 +19,44 @@ try {
     $messageType = 'error';
 }
 
+$editing = null;
+if ($editId > 0 && $conn) {
+    $editing = $conn->query('SELECT id_adscripcion, nombre_adscripcion FROM adscripciones WHERE id_adscripcion = ' . $editId . ' LIMIT 1')->fetch_assoc();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
-    $nombre = trim($_POST['nombre_adscripcion'] ?? '');
-    if ($nombre === '') {
-        $message = 'Escribe el nombre de la adscripción.';
-        $messageType = 'error';
-    } else {
-        $stmt = $conn->prepare('INSERT INTO adscripciones (nombre_adscripcion) VALUES (?)');
-        $stmt->bind_param('s', $nombre);
-        if ($stmt->execute()) {
-            $message = 'Adscripción agregada correctamente.';
+    $action = $_POST['action'] ?? 'save_adscripcion';
+    if ($action === 'delete_adscripcion') {
+        $deleteId = (int) ($_POST['id_adscripcion'] ?? 0);
+        if ($deleteId > 0) {
+            $conn->query('DELETE FROM adscripciones WHERE id_adscripcion = ' . $deleteId);
+            $message = 'Adscripción eliminada correctamente.';
             $messageType = 'success';
-        } else {
-            $message = 'No se pudo guardar la adscripción: ' . $stmt->error;
-            $messageType = 'error';
         }
-        $stmt->close();
+    } else {
+        $idAdscripcion = (int) ($_POST['id_adscripcion'] ?? 0);
+        $nombre = trim($_POST['nombre_adscripcion'] ?? '');
+        if ($nombre === '') {
+            $message = 'Escribe el nombre de la adscripción.';
+            $messageType = 'error';
+        } else {
+            if ($idAdscripcion > 0) {
+                $stmt = $conn->prepare('UPDATE adscripciones SET nombre_adscripcion = ? WHERE id_adscripcion = ?');
+                $stmt->bind_param('si', $nombre, $idAdscripcion);
+                $message = 'Adscripción actualizada correctamente.';
+            } else {
+                $stmt = $conn->prepare('INSERT INTO adscripciones (nombre_adscripcion) VALUES (?)');
+                $stmt->bind_param('s', $nombre);
+                $message = 'Adscripción agregada correctamente.';
+            }
+            if ($stmt->execute()) {
+                $messageType = 'success';
+            } else {
+                $message = 'No se pudo guardar la adscripción: ' . $stmt->error;
+                $messageType = 'error';
+            }
+            $stmt->close();
+        }
     }
 }
 
@@ -92,15 +115,22 @@ $adscripciones = $conn ? $conn->query('SELECT id_adscripcion, nombre_adscripcion
 
             <section class="panel">
                 <div class="panel-header">
-                    <h3>Nueva adscripción</h3>
+                    <h3><?= $editing ? 'Editar adscripción' : 'Nueva adscripción' ?></h3>
                 </div>
                 <form method="post" class="form-grid single-field">
+                    <input type="hidden" name="action" value="save_adscripcion">
+                    <?php if ($editing): ?>
+                        <input type="hidden" name="id_adscripcion" value="<?= (int) $editing['id_adscripcion'] ?>">
+                    <?php endif; ?>
                     <div class="field">
                         <label>Nombre de la adscripción</label>
-                        <input type="text" name="nombre_adscripcion" required>
+                        <input type="text" name="nombre_adscripcion" value="<?= htmlspecialchars($editing['nombre_adscripcion'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
                     </div>
                     <div class="field field--submit">
-                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <button type="submit" class="btn btn-primary"><?= $editing ? 'Actualizar' : 'Guardar' ?></button>
+                        <?php if ($editing): ?>
+                            <a href="<?= htmlspecialchars(app_url('gestor/adscripciones.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-secondary">Cancelar</a>
+                        <?php endif; ?>
                     </div>
                 </form>
             </section>
@@ -109,9 +139,19 @@ $adscripciones = $conn ? $conn->query('SELECT id_adscripcion, nombre_adscripcion
                 <div class="panel-header">
                     <h3>Listado de adscripciones</h3>
                 </div>
-                <div class="tag-list">
+                <div class="tag-list" style="display:block;">
                     <?php if ($adscripciones): while ($adscripcion = $adscripciones->fetch_assoc()): ?>
-                        <span class="tag">#<?= (int) $adscripcion['id_adscripcion'] ?> <?= htmlspecialchars($adscripcion['nombre_adscripcion'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <div class="tag-row">
+                            <span class="tag">#<?= (int) $adscripcion['id_adscripcion'] ?> <?= htmlspecialchars($adscripcion['nombre_adscripcion'], ENT_QUOTES, 'UTF-8') ?></span>
+                            <div class="row-actions">
+                                <a href="<?= htmlspecialchars(app_url('gestor/adscripciones.php?edit_id=' . (int) $adscripcion['id_adscripcion']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-small btn-secondary">Editar</a>
+                                <form method="post" class="inline-form">
+                                    <input type="hidden" name="action" value="delete_adscripcion">
+                                    <input type="hidden" name="id_adscripcion" value="<?= (int) $adscripcion['id_adscripcion'] ?>">
+                                    <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('¿Deseas eliminar esta adscripción?');">Eliminar</button>
+                                </form>
+                            </div>
+                        </div>
                     <?php endwhile; else: ?>
                         <span class="tag">Sin adscripciones registradas</span>
                     <?php endif; ?>

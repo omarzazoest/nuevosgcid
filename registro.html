@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Entrada de Usuarios del CID 2025</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.opcional{display:none;}
+</style>
+</head>
+<body>
+<div style="text-align:center; margin-bottom:25px;">
+    <img src="img/logo-upvm.jpeg" alt="UPVM Logo" style="height:80px; margin-bottom:10px;">
+</div>
+
+<h1>Control de Entrada de Usuarios del CID 2025</h1>
+
+<form action="guardar_registro.php" method="post">
+
+<!-- === Datos principales === -->
+<label for="fecha">1. Fecha de ingreso</label>
+<input type="date" id="fecha" name="fecha" required>
+
+<label for="hora">2. Hora de entrada</label>
+<input type="time" id="hora" name="hora" required>
+
+<label for="nombre">3. Nombre(s)</label>
+<input type="text" id="nombre" name="nombre" required>
+
+<label for="apellidoP">4. Apellido paterno</label>
+<input type="text" id="apellidoP" name="apellidoP" required>
+
+<label for="apellidoM">5. Apellido materno</label>
+<input type="text" id="apellidoM" name="apellidoM" required>
+
+<label for="sexo">6. Sexo</label>
+<select id="sexo" name="sexo" required>
+    <option value="">Selecciona la respuesta</option>
+    <option>Masculino</option>
+    <option>Femenino</option>
+    <option>Otro</option>
+</select>
+
+<label for="matricula">7. Número de Matrícula o empleado</label>
+<input type="text" id="matricula" name="matricula"
+   pattern="^\d{10}$" 
+   title="Debe contener exactamente 10 dígitos"
+   required>
+
+<label for="funcion">8. Función</label>
+<select id="funcion" name="funcion" required onchange="mostrarCampo()">
+    <option value="">Selecciona la respuesta</option>
+    <option value="estudiante">Estudiante</option>
+    <option value="egresado">Egresado</option>
+    <option value="profesor">Profesor</option>
+    <option value="administrativo">Personal administrativo</option>
+    <option value="externo">Externo</option>
+</select>
+
+<!-- Carrera -->
+<div id="carrera" class="opcional">
+    <label for="carreraSelect">9. Carrera</label>
+    <select id="carreraSelect" name="carrera" onchange="mostrarServicioEstudiante()">
+        <option value="" >Selecciona la respuesta</option>
+        <option value="LICENCIATURA_EN_ADMINISTRACIÓN">LICENCIATURA EN ADMINISTRACIÓN</option>
+        <option value="LICENCIATURA_EN_INGENIERÍA_EN_ALIMENTOS">LICENCIATURA EN INGENIERÍA EN ALIMENTOS</option>
+        <option value="LICENCIATURA_EN_INGENIERÍA_EN_LOGÍSTICA">LICENCIATURA EN INGENIERÍA EN LOGÍSTICA</option>
+        <option value="LICENCIATURA_EN_INGENIERÍA_MECÁNICA_AUTOMOTRIZ">LICENCIATURA EN INGENIERÍA MECÁNICA AUTOMOTRIZ</option>
+        <option value="LICENCIATURA_EN_INGENIERÍA_MECATRÓNICA">LICENCIATURA EN INGENIERÍA MECATRÓNICA</option>
+        <option value="LICENCIATURA_EN_INGENIERÍA_EN_NANOTECNOLOGÍA">LICENCIATURA EN INGENIERÍA EN NANOTECNOLOGÍA</option>
+        <option value="LICENCIATURA_EN_INGENIERÍA_EN_TECNOLOGÍAS_DE_LA_INFORMACIÓN_E_INNOVACIÓN_DIGITAL">LICENCIATURA EN INGENIERÍA EN TECNOLOGÍAS DE LA INFORMACIÓN E INNOVACIÓN DIGITAL</option>
+        <option value="INGENIERÍA_AGROINDUSTRIAL">INGENIERÍA AGROINDUSTRIAL</option>
+        <option value="INGENIERÍA_EN_BIOTECNOLOGÍA">INGENIERÍA EN BIOTECNOLOGÍA</option>
+        <option value="INGENIERÍA_EN_LOGÍSTICA_Y_TRANSPORTE">INGENIERÍA EN LOGÍSTICA Y TRANSPORTE</option>
+        <option value="INGENIERÍA_EN_NANOTECNOLOGÍA">INGENIERÍA EN NANOTECNOLOGÍA</option>
+        <option value="INGENIERÍA_EN_MECÁNICA_AUTOMOTRIZ">INGENIERÍA EN MECÁNICA AUTOMOTRIZ</option>
+        <option value="INGENIERÍA_EN_MECATRÓNICA">INGENIERÍA EN MECATRÓNICA</option>
+        <option value="INGENIERÍA_EN_TECNOLOGÍAS_DE_LA_INFORMACIÓN">INGENIERÍA EN TECNOLOGÍAS DE LA INFORMACIÓN</option>
+        <option value="INGENIERÍA_INDUSTRIAL">INGENIERÍA INDUSTRIAL</option>
+        <option value="LICENCIATURA_EN_ADMINISTRACIÓN_Y_GESTIÓN_DE_PYMES">LICENCIATURA EN ADMINISTRACIÓN Y GESTIÓN DE PYMES</option>
+        <option value="LICENCIATURA_EN_ADMINISTRACIÓN_Y_GESTIÓN_EMPRESARIAL">LICENCIATURA EN ADMINISTRACIÓN Y GESTIÓN EMPRESARIAL</option>
+        <option value="MAESTRÍA_EN_ADMINISTRACIÓN">MAESTRÍA EN ADMINISTRACIÓN</option>
+        <option value="MAESTRÍA_EN_FORMACIÓN_DE_F._DE_DOCENTES_EN_C._NATURALES_Y_E.">MAESTRÍA EN FORMACIÓN DE F. DE DOCENTES EN C. NATURALES Y E.</option>
+        <option value="MAESTRÍA_EN_CIENCIAS_EN_MICRO_Y_NANOTECNOLOGÍAS">MAESTRÍA EN CIENCIAS EN MICRO Y NANOTECNOLOGÍAS</option>
+        <option value="MAESTRÍA_EN_INGENIERÍA_DE_MANUFACTURA">MAESTRÍA EN INGENIERÍA DE MANUFACTURA</option>
+        <option value="MAESTRÍA_EN_INGENIERÍA_MECATRÓNICA">MAESTRÍA EN INGENIERÍA MECATRÓNICA</option>
+        <option value="DOCTORADO_EN_CIENCIA_DE_MATERIALES">DOCTORADO EN CIENCIA DE MATERIALES</option>
+        <option value="MAESTRÍA_EN_TECNOLOGÍAS_DE_LA_INFORMACIÓN_Y_COMUNICACIONES_CON_ESPECIALIDAD_EN_DESARROLLO_DE_SISTEMAS_DE_COMPUTACIÓN_Y_COMUNICACIÓN.">MAESTRÍA EN TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIONES CON ESPECIALIDAD EN DESARROLLO DE SISTEMAS DE COMPUTACIÓN Y COMUNICACIÓN.</option>
+        <option value="OTRA">OTRA</option>
+
+        <!-- ... resto de opciones ... -->
+    </select>
+</div>
+
+<!-- Adscripción -->
+<div id="adscripcion" class="opcional">
+    <label for="adsSelect">9. Adscripción</label>
+    <select id="adsSelect" name="adscripcion" onchange="mostrarServicioAds()">
+        <option value="">Selecciona el área de adscripción</option>
+        <option value="ABOGACÍA_GENERAL">ABOGACÍA GENERAL</option>
+        <option value="CENTRO_DE_INFORMACIÓN_Y_DOCUMENTACIÓN">CENTRO DE INFORMACIÓN Y DOCUMENTACIÓN</option>
+        <option value="CENTRO_DE_INNOVACIÓN_TECNOLÓGICA_EN_INFORMÁTICA_Y_COMUNICACIONES">CENTRO DE INNOVACIÓN TECNOLÓGICA EN INFORMÁTICA Y COMUNICACIONES</option>
+        <option value="CENTRO_DE_INNOVACIÓN_TECNOLÓGICA_EN_MANUFACTURA">CENTRO DE INNOVACIÓN TECNOLÓGICA EN MANUFACTURA</option>
+        <option value="DEPARTAMENTO_DE_COMPUTACIÓN_Y_TELEMÁTICA">DEPARTAMENTO DE COMPUTACIÓN Y TELEMÁTICA</option>
+        <option value="DEPARTAMENTO_DE_CONTROL_ESCOLAR">DEPARTAMENTO DE CONTROL ESCOLAR</option>
+        <option value="DEPARTAMENTO_DE_CULTURA_Y_DEPORTE">DEPARTAMENTO DE CULTURA Y DEPORTE</option>
+        <option value="DEPARTAMENTO_DE_EDUCACIÓN_CONTINUA">DEPARTAMENTO DE EDUCACIÓN CONTINUA</option>
+        <option value="DEPARTAMENTO_DE_GESTIÓN_DE_CAPITAL_HUMANO">DEPARTAMENTO DE GESTIÓN DE CAPITAL HUMANO</option>
+        <option value="DEPARTAMENTO_DE_INCUBACIÓN_Y_VINCULACIÓN_EMPRESARIAL">DEPARTAMENTO DE INCUBACIÓN Y VINCULACIÓN EMPRESARIAL</option>
+        <option value="DEPARTAMENTO_DE_MEJORA_DE_PROCESOS_Y_CALIDAD">DEPARTAMENTO DE MEJORA DE PROCESOS Y CALIDAD</option>
+        <option value="DEPARTAMENTO_DE_PLANEACIÓN_Y_DESARROLLO_INSTITUCIONAL">DEPARTAMENTO DE PLANEACIÓN Y DESARROLLO INSTITUCIONAL</option>
+        <option value="DEPARTAMENTO_DE_RECURSOS_FINANCIEROS">DEPARTAMENTO DE RECURSOS FINANCIEROS</option>
+        <option value="DEPARTAMENTO_DE_RECURSOS_MATERIALES_Y_SERVICIOS_GENERALES">DEPARTAMENTO DE RECURSOS MATERIALES Y SERVICIOS GENERALES</option>
+        <option value="DEPARTAMENTO_DE_SEGUIMIENTO_DE_OBRAS_Y_MANTENIMIENTO">DEPARTAMENTO DE SEGUIMIENTO DE OBRAS Y MANTENIMIENTO</option>
+        <option value="DEPARTAMENTO_DE_SERVICIO_SOCIAL_TITULACIÓN_Y_SEGUIMIENTO_DE_EGRESADOS">DEPARTAMENTO DE SERVICIO SOCIAL, TITULACIÓN Y SEGUIMIENTO DE EGRESADOS</option>
+        <option value="DIRECCIÓN_DE_DIVISIÓN_DE_INGENIERÍA_EN_INFORMÁTICA">DIRECCIÓN DE DIVISIÓN DE INGENIERÍA EN INFORMÁTICA</option>
+        <option value="DIRECCIÓN_DE_DIVISIÓN_DE_INGENIERÍA_EN_NANOTECNOLOGÍA">DIRECCIÓN DE DIVISIÓN DE INGENIERÍA EN NANOTECNOLOGÍA</option>
+        <option value="DIRECCIÓN_DE_DIVISIÓN_DE_INGENIERÍA_INDUSTRIAL">DIRECCIÓN DE DIVISIÓN DE INGENIERÍA INDUSTRIAL</option>
+        <option value="DIRECCIÓN_DE_DIVISIÓN_DE_INGENIERÍA_MECATRÓNICA">DIRECCIÓN DE DIVISIÓN DE INGENIERÍA MECATRÓNICA</option>
+        <option value="DIRECCIÓN_DE_DIVISIÓN_DE_LICENCIATURA_EN_ADMINISTRACIÓN_Y_GESTIÓN_DE_PYMES">DIRECCIÓN DE DIVISIÓN DE LICENCIATURA EN ADMINISTRACIÓN Y GESTIÓN DE PYMES</option>
+        <option value="DIRECCIÓN_DE_EXTENSIÓN_UNIVERSITARIA_Y_VINCULACIÓN">DIRECCIÓN DE EXTENSIÓN UNIVERSITARIA Y VINCULACIÓN</option>
+        <option value="ÓRGANO_INTERNO_DE_CONTROL">ÓRGANO INTERNO DE CONTROL</option>
+        <option value="RECTORÍA">RECTORÍA</option>
+        <option value="SECRETARÍA_ACADÉMICA">SECRETARÍA ACADÉMICA</option>
+        <option value="SECRETARÍA_ADMINISTRATIVA">SECRETARÍA ADMINISTRATIVA</option>
+        <option value="SUBDIRECCIÓN_DE_INFORMACIÓN_PLANEACIÓN_PROGRAMACIÓN_Y_EVALUACIÓN">SUBDIRECCIÓN DE INFORMACIÓN, PLANEACIÓN, PROGRAMACIÓN Y EVALUACIÓN</option>
+        <option value="SUBDIRECCIÓN_DE_SERVICIOS_ADMINISTRATIVOS">SUBDIRECCIÓN DE SERVICIOS ADMINISTRATIVOS</option>
+        <option value="SUBDIRECCIÓN_DE_SERVICIOS_EDUCATIVOS">SUBDIRECCIÓN DE SERVICIOS EDUCATIVOS</option>
+        <option value="OTRA">OTRA</option>
+
+        <!-- ... resto de opciones ... -->
+    </select>
+</div>
+
+<!-- Servicio solicitado -->
+<div id="servicio" class="opcional">
+    <label for="servicioSelect">10. Servicio solicitado</label>
+    <select id="servicioSelect" name="servicio" onchange="mostrarSubservicio()">
+        <option value="">Selecciona la respuesta</option>
+        <option value="consulta">Consulta en sala</option>
+        <option value="devolucion">Devolución de material</option>
+        <option value="renovacion">Renovación de material</option>
+        <option value="prestamo">Préstamo de material</option>
+        <option value="cubiculo">Cubículo</option>
+        <option value="digital">Biblioteca digital</option>
+        <option value="actividades">Actividades en biblioteca</option>
+    </select>
+</div>
+
+<!-- 11. Especifica título -->
+<div id="opcionComunBox" class="opcional">
+    <label for="opcionComun">11. Especifica Título (libro, materia, obligatorio)</label>
+    <input id="opcionComun" name="opcionComun" type="text" placeholder="">
+</div>
+
+<!-- 11. Nombre de la biblioteca digital -->
+<div id="digitalNombreBox" class="opcional">
+    <label for="digitalNombre">11. Nombre de la biblioteca digital a consultar</label>
+    <select id="digitalNombre" name="digitalNombre" onchange="mostrarTituloDigital()">
+        <option value="">Selecciona una biblioteca</option>
+        <option value="biblioteca1">Biblioteca 1</option>
+        <option value="biblioteca2">Biblioteca 2</option>
+    </select>
+</div>
+
+<!-- 12. Especifica título de la digital -->
+<div id="digitalTituloBox" class="opcional">
+    <label for="digitalTitulo">12. Especifica Título (libro, materia, obligatorio)</label>
+    <input id="digitalTitulo" name="digitalTitulo" type="text">
+</div>
+
+<!-- 11. Número de cubículo -->
+<div id="cubiculoNumBox" class="opcional">
+    <label for="numCubiculo">11. Número de cubículo</label>
+    <select name="numCubiculo" id="numCubiculo" onchange="mostrarActividadCubiculo()">
+        <option value="">Selecciona cubículo</option>
+        <option value="1">Cubículo 1</option>
+        <option value="2">Cubículo 2</option>
+        <option value="3">Cubículo 3</option>
+    </select>
+</div>
+
+<!-- 12. Actividad cubículo -->
+<div id="cubiculoActBox" class="opcional">
+    <label for="actividadCubiculo">12. Especifica la actividad que se va a realizar</label>
+    <input type="text" id="actividadCubiculo" name="actividadCubiculo">
+</div>
+
+<!-- 12. Actividad a realizar -->
+<div id="actividadesBox" class="opcional">
+    <label for="actividadBiblioteca">11. Especifica la actividad que se va a realizar</label>
+    <input type="text" id="actividadBiblioteca" name="actividadBiblioteca">
+</div>
+
+<button type="submit">Enviar</button>
+</form>
+
+<script>
+function ocultar(...ids){
+    ids.forEach(id=>{
+        const el = document.getElementById(id);
+        if(!el) return;
+
+        // 🔹 Limpiar valores de todos los <input>, <select> y <textarea> que haya dentro
+        el.querySelectorAll('input, select, textarea').forEach(campo=>{
+            if(campo.type === 'checkbox' || campo.type === 'radio'){
+                campo.checked = false;
+            } else if(campo.tagName.toLowerCase() === 'select'){
+                campo.selectedIndex = 0; // vuelve a la opción inicial
+            } else {
+                campo.value = '';
+            }
+        });
+
+        // 🔹 Ocultar contenedor
+        el.style.display = 'none';
+    });
+}
+
+function mostrarCampo(){
+    const f = document.getElementById('funcion').value;
+    ocultar(
+        'carrera','adscripcion','servicio',
+        'opcionComunBox','digitalNombreBox','digitalTituloBox',
+        'cubiculoNumBox','cubiculoActBox','actividadesBox'
+    );
+
+    if(f==='estudiante' || f==='egresado'){
+        document.getElementById('carrera').style.display='block';
+    } else if(f==='profesor' || f==='administrativo'){
+        document.getElementById('adscripcion').style.display='block';
+    } else if(f==='externo'){
+        document.getElementById('servicio').style.display='block';
+    }
+}
+
+function mostrarServicioEstudiante(){
+    const c = document.getElementById('carreraSelect').value;
+    ocultar(
+        'servicio',
+        'opcionComunBox','digitalNombreBox','digitalTituloBox',
+        'cubiculoNumBox','cubiculoActBox','actividadesBox'
+    );
+    if(c){
+        document.getElementById('servicio').style.display = 'block';
+    }
+}
+
+function mostrarServicioAds(){
+    const a = document.getElementById('adsSelect').value;
+    ocultar(
+        'servicio',
+        'opcionComunBox','digitalNombreBox','digitalTituloBox',
+        'cubiculoNumBox','cubiculoActBox','actividadesBox'
+    );
+    if(a){
+        document.getElementById('servicio').style.display = 'block';
+    }
+}
+
+function mostrarSubservicio(){
+    const s = document.getElementById('servicioSelect').value;
+    ocultar(
+        'opcionComunBox','digitalNombreBox','digitalTituloBox',
+        'cubiculoNumBox','cubiculoActBox','actividadesBox'
+    );
+
+    if(['consulta','devolucion','renovacion','prestamo'].includes(s)){
+        document.getElementById('opcionComunBox').style.display='block';
+    }
+    else if(s==='digital'){
+        document.getElementById('digitalNombreBox').style.display='block';
+    }
+    else if(s==='cubiculo'){
+        document.getElementById('cubiculoNumBox').style.display='block';
+    }
+    else if(s==='actividades'){
+        document.getElementById('actividadesBox').style.display='block';
+    }
+}
+
+function mostrarTituloDigital(){
+    const d = document.getElementById('digitalNombre').value;
+    ocultar('digitalTituloBox');
+    if(d){
+        document.getElementById('digitalTituloBox').style.display = 'block';
+    }
+}
+
+function mostrarActividadCubiculo(){
+    const c = document.getElementById('numCubiculo').value;
+    ocultar('cubiculoActBox');
+    if(c){
+        document.getElementById('cubiculoActBox').style.display = 'block';
+    }
+}
+</script>
+</body>
+</html>

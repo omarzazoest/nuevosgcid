@@ -11,6 +11,11 @@ $conn = null;
 $message = '';
 $messageType = 'success';
 
+$editId = (int) ($_GET['edit_id'] ?? 0);
+if ($editId > 0 && !$conn) {
+    // no-op
+}
+
 try {
     $conn = get_connection();
 } catch (Throwable $e) {
@@ -18,22 +23,44 @@ try {
     $messageType = 'error';
 }
 
+$editing = null;
+if ($editId > 0 && $conn) {
+    $editing = $conn->query('SELECT id_carrera, nombre_carrera FROM carreras WHERE id_carrera = ' . $editId . ' LIMIT 1')->fetch_assoc();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
-    $nombre = trim($_POST['nombre_carrera'] ?? '');
-    if ($nombre === '') {
-        $message = 'Escribe el nombre de la carrera.';
-        $messageType = 'error';
-    } else {
-        $stmt = $conn->prepare('INSERT INTO carreras (nombre_carrera) VALUES (?)');
-        $stmt->bind_param('s', $nombre);
-        if ($stmt->execute()) {
-            $message = 'Carrera agregada correctamente.';
+    $action = $_POST['action'] ?? 'save_carrera';
+    if ($action === 'delete_carrera') {
+        $deleteId = (int) ($_POST['id_carrera'] ?? 0);
+        if ($deleteId > 0) {
+            $conn->query('DELETE FROM carreras WHERE id_carrera = ' . $deleteId);
+            $message = 'Carrera eliminada correctamente.';
             $messageType = 'success';
-        } else {
-            $message = 'No se pudo guardar la carrera: ' . $stmt->error;
-            $messageType = 'error';
         }
-        $stmt->close();
+    } else {
+        $idCarrera = (int) ($_POST['id_carrera'] ?? 0);
+        $nombre = trim($_POST['nombre_carrera'] ?? '');
+        if ($nombre === '') {
+            $message = 'Escribe el nombre de la carrera.';
+            $messageType = 'error';
+        } else {
+            if ($idCarrera > 0) {
+                $stmt = $conn->prepare('UPDATE carreras SET nombre_carrera = ? WHERE id_carrera = ?');
+                $stmt->bind_param('si', $nombre, $idCarrera);
+                $message = 'Carrera actualizada correctamente.';
+            } else {
+                $stmt = $conn->prepare('INSERT INTO carreras (nombre_carrera) VALUES (?)');
+                $stmt->bind_param('s', $nombre);
+                $message = 'Carrera agregada correctamente.';
+            }
+            if ($stmt->execute()) {
+                $messageType = 'success';
+            } else {
+                $message = 'No se pudo guardar la carrera: ' . $stmt->error;
+                $messageType = 'error';
+            }
+            $stmt->close();
+        }
     }
 }
 
@@ -92,15 +119,22 @@ $carreras = $conn ? $conn->query('SELECT id_carrera, nombre_carrera FROM carrera
 
             <section class="panel">
                 <div class="panel-header">
-                    <h3>Nueva carrera</h3>
+                    <h3><?= $editing ? 'Editar carrera' : 'Nueva carrera' ?></h3>
                 </div>
                 <form method="post" class="form-grid single-field">
+                    <input type="hidden" name="action" value="save_carrera">
+                    <?php if ($editing): ?>
+                        <input type="hidden" name="id_carrera" value="<?= (int) $editing['id_carrera'] ?>">
+                    <?php endif; ?>
                     <div class="field">
                         <label>Nombre de la carrera</label>
-                        <input type="text" name="nombre_carrera" required>
+                        <input type="text" name="nombre_carrera" value="<?= htmlspecialchars($editing['nombre_carrera'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
                     </div>
                     <div class="field field--submit">
-                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <button type="submit" class="btn btn-primary"><?= $editing ? 'Actualizar' : 'Guardar' ?></button>
+                        <?php if ($editing): ?>
+                            <a href="<?= htmlspecialchars(app_url('gestor/carreras.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-secondary">Cancelar</a>
+                        <?php endif; ?>
                     </div>
                 </form>
             </section>
@@ -109,9 +143,19 @@ $carreras = $conn ? $conn->query('SELECT id_carrera, nombre_carrera FROM carrera
                 <div class="panel-header">
                     <h3>Listado de carreras</h3>
                 </div>
-                <div class="tag-list">
+                <div class="tag-list" style="display:block;">
                     <?php if ($carreras): while ($carrera = $carreras->fetch_assoc()): ?>
-                        <span class="tag">#<?= (int) $carrera['id_carrera'] ?> <?= htmlspecialchars($carrera['nombre_carrera'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <div class="tag-row">
+                            <span class="tag">#<?= (int) $carrera['id_carrera'] ?> <?= htmlspecialchars($carrera['nombre_carrera'], ENT_QUOTES, 'UTF-8') ?></span>
+                            <div class="row-actions">
+                                <a href="<?= htmlspecialchars(app_url('gestor/carreras.php?edit_id=' . (int) $carrera['id_carrera']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-small btn-secondary">Editar</a>
+                                <form method="post" class="inline-form">
+                                    <input type="hidden" name="action" value="delete_carrera">
+                                    <input type="hidden" name="id_carrera" value="<?= (int) $carrera['id_carrera'] ?>">
+                                    <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('¿Deseas eliminar esta carrera?');">Eliminar</button>
+                                </form>
+                            </div>
+                        </div>
                     <?php endwhile; else: ?>
                         <span class="tag">Sin carreras registradas</span>
                     <?php endif; ?>
