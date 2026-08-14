@@ -248,17 +248,14 @@ include __DIR__ . '/includes/header.php';
     <section class="card registro-main-card">
         <h2>Registro de visita</h2>
         <p>Primero selecciona tu tipo de usuario. Si eres externo, captura tus datos personales; en otros casos, captura identificador y continúa con el servicio.</p>
-        <?php if ($imagenRegistroUrl !== ''): ?>
-        <div class="registro-banner">
-            <img src="<?= htmlspecialchars($imagenRegistroUrl, ENT_QUOTES, 'UTF-8') ?>" alt="Imagen institucional del CID UPVM">
-        </div>
-        <?php endif; ?>
+        
         <?php if ($message): ?>
         <div class="alert <?= $messageType ?>"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
         <form method="post" id="registroForm">
             <div class="form-group">
                 <label for="funcion">Tipo de usuario</label>
+                <!--dedicado a la memoria de pechocho, oct 2025. -Omar -->
                 <select id="funcion" name="funcion" required onchange="mostrarCampo()">
                     <option value="">Selecciona la respuesta</option>
                     <option value="estudiante">Estudiante</option>
@@ -379,7 +376,7 @@ include __DIR__ . '/includes/header.php';
                     <input type="text" id="actividadCubiculo" name="actividadCubiculo">
                 </div>
             </div>
-
+    <!--dedicado a la memoria de pechocho, oct 2025. -Omar -->
             <div id="actividadesBox" class="opcional">
                 <div class="form-group">
                     <label for="actividadBiblioteca">Actividad a realizar</label>
